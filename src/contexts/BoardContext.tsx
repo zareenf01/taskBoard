@@ -46,8 +46,7 @@ type Action =
       type: "MOVE_TASK";
       payload: { taskId: string; newColumnId: string; newOrder: number };
     }
-  | { type: "REORDER_TASK"; payload: { taskId: string; newOrder: number } }
-  | { type: "SET_SEARCH_FILTERS"; payload: SearchFilters };
+  | { type: "REORDER_TASK"; payload: { taskId: string; newOrder: number } };
 
 const initialState: AppState = {
   boards: [],
@@ -118,7 +117,7 @@ const boardReducer = (state: AppState, action: Action): AppState => {
         ),
       };
 
-    case "DELETE_COLUMN":
+    case "DELETE_COLUMN": {
       const columnToDelete = state.columns.find(
         (col) => col.id === action.payload
       );
@@ -137,6 +136,7 @@ const boardReducer = (state: AppState, action: Action): AppState => {
             : board
         ),
       };
+    }
 
     case "CREATE_TASK":
       return {
@@ -159,7 +159,7 @@ const boardReducer = (state: AppState, action: Action): AppState => {
         ),
       };
 
-    case "DELETE_TASK":
+    case "DELETE_TASK": {
       const taskToDelete = state.tasks.find(
         (task) => task.id === action.payload
       );
@@ -175,8 +175,9 @@ const boardReducer = (state: AppState, action: Action): AppState => {
             : column
         ),
       };
+    }
 
-    case "MOVE_TASK":
+    case "MOVE_TASK": {
       const { taskId, newColumnId, newOrder } = action.payload;
       const taskToMove = state.tasks.find((task) => task.id === taskId);
       if (!taskToMove) return state;
@@ -207,8 +208,9 @@ const boardReducer = (state: AppState, action: Action): AppState => {
           return column;
         }),
       };
+    }
 
-    case "REORDER_TASK":
+    case "REORDER_TASK": {
       const { taskId: reorderTaskId, newOrder: reorderNewOrder } =
         action.payload;
       const taskToReorder = state.tasks.find(
@@ -232,6 +234,7 @@ const boardReducer = (state: AppState, action: Action): AppState => {
           return column;
         }),
       };
+    }
 
     default:
       return state;
@@ -246,17 +249,21 @@ export const BoardProvider: React.FC<BoardProviderProps> = ({ children }) => {
   const [state, dispatch] = useReducer(boardReducer, initialState);
   const [searchFilters, setSearchFilters] =
     React.useState<SearchFilters>(initialSearchFilters);
+  const [isLoaded, setIsLoaded] = React.useState(false);
 
   useEffect(() => {
     const savedData = loadFromLocalStorage();
     if (savedData) {
       dispatch({ type: "SET_STATE", payload: savedData });
     }
+    setIsLoaded(true);
   }, []);
 
   useEffect(() => {
-    saveToLocalStorage(state);
-  }, [state]);
+    if (isLoaded) {
+      saveToLocalStorage(state);
+    }
+  }, [state, isLoaded]);
 
   const createBoard = (
     title: string,
